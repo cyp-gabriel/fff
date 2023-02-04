@@ -2,4 +2,8 @@
 
 ## v1.0
 
-Updated README
+Changes:
+
+* App.py: parameterized for 'term' and 'categories'
+* events.py: Cleaned up printed output
+* events.py: Added "before" event
