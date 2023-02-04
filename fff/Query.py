@@ -11,6 +11,7 @@ class Query:
 class QueryTextOutputBlock:
     query_item = None
     bus_name = ''
+    categories = None
     addr1 = ''
     addr2 = ''
     addr3 = ''
@@ -22,6 +23,7 @@ class QueryTextOutputBlock:
     def __init__(self, query_item):
         self.query_item = query_item
         self.bus_name = '' if query_item['Name'] is None else query_item['Name']
+        self.categories = '' if query_item['Categories'] is None else query_item['Categories'][0]['title']
         self.addr1 = '' if query_item['Address']['address1'] is None else query_item['Address']['address1']
         self.addr2 = '' if query_item['Address']['address2'] is None else query_item['Address']['address2']
         self.addr3 = '' if query_item['Address']['address3'] is None else query_item['Address']['address3']
@@ -31,7 +33,7 @@ class QueryTextOutputBlock:
         self.phone = '' if query_item['Phone'] is None else query_item['Phone']
 
     def the_name(self):
-        return self.bus_name
+        return f"{self.bus_name}: ({self.categories})"
 
     def the_address_lines(self):
         # address: line 1 and 2

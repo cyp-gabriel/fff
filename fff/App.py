@@ -33,8 +33,7 @@ class App:
     #
     # Fields
     #
-    categories = 'masonry'
-    term = 'tax'
+    #categories = ['masonry']
     queries = []
     zip_codes = []
     event_subs = []
@@ -60,7 +59,7 @@ class App:
 
         return self.zip_codes
 
-    def ExecQueries(self, stop=5):
+    def ExecQueries(self, term, categories=None, stop=2):
         if not self.zip_codes:
             self.LoadZipCodes()
 
@@ -71,13 +70,14 @@ class App:
                 if i == stop:
                     break
 
-                output += self.ExecQueryByZipCode(z)
+                output += self.ExecQueryByZipCode(term, categories, z)
                 query_data_filename = "output/json/%s.json" % z['zip_code']
                 self.fire_execquery_oncomplete(query_data_filename, output)
-                i += 1
             except Exception as ex:
                 print(ex)
                 continue
+            finally:
+                i += 1
 
         return output
 
@@ -90,6 +90,8 @@ class App:
             #res = requests.get('https://api.yelp.com/v3/businesses/business_id_or_alias/service_offerings', params=payload, headers=self.headers)
             if res.status_code != 200:
                 raise Exception("App.ExecQuery: response.status_code == 200")
+
+            self.fire_execquery_before(res.url, payload['term'])
 
             q = Query()
             q.obj = json.loads(res.text)
@@ -136,28 +138,29 @@ class App:
                 return output
 
 
-    def ExecQueryByZipCode(self, zip_code):
-        payload = self.make_payload(zip_code=zip_code)
+    def ExecQueryByZipCode(self, term, categories,  zip_code):
+        #payload = self.make_payload(zip_code=zip_code, term=term, categories=categories) if categories != None else self.make_payload(zip_code=zip_code, term=term)
+        payload = self.make_payload(zip_code=zip_code, term=term, categories=categories)
 
         filename = "output/json/%s.json" % zip_code['zip_code']
         return self.ExecQuery(payload, filename)
 
-    def ExecQueryByCoords(self, coord):
+    def ExecQueryByCoords(self, term, coord):
 
     #////////////////////////////////////////////////
     # Set up API payload
 
-        payload = self.make_payload(coord['lat'], coord['lon'])
+        payload = self.make_payload(coord['lat'], coord['lon'], term)
 
         return self.ExecQuery(payload)
 
-    def ExecAllQueries(self):
+    def ExecAllQueries(self, term, categories):
         if not self.zip_codes:
             self.LoadZipCodes()
 
         output = ''
         for z in self.zip_codes:
-            output += self.ExecQueryByZipCode(z)
+            output += self.ExecQueryByZipCode(term, categories, z)
             self.fire_execquery_oncomplete(output)
 
         return output
@@ -191,27 +194,39 @@ class App:
         query_result_obj['categories'] = query_obj['categories']
         return query_result_obj
 
-    def make_payload(self, lat, lon, limit="50"):
+    def make_payload(self, lat, lon, term, categories, limit=2, radius=None):
         payload = {
             'locale':'en_US',
             'limit':limit,
-            'term': self.term,
-            'categories':self.categories,
+            'term': term,
+            #'categories':self.categories,
             'latitude': lat,
-            'longitude': lon,
-            'radius': '40000'
+            'longitude': lon
             }
+
+        if not categories != None:
+            payload["categories"] = categories
+
+        if not radius != None:
+            payload["radius"] = radius
+
         return payload
 
-    def make_payload(self, zip_code, limit=50):
+    def make_payload(self, zip_code, term, categories, limit=2, radius=None):
         payload = {
             'locale':'en_US',
             'limit': limit,
-            'term': self.term,
-            'categories':self.categories,
-            'location':str(zip_code['zip_code']),
-            'radius': '40000'
+            'term': term,
+            #'categories':categories,
+            'location':str(zip_code['zip_code'])
             }
+
+        if categories != None:
+            payload["categories"] = categories
+
+        if radius != None:
+            payload["radius"] = radius
+
         return payload
 
     def fire_execquery_oncomplete(self, query_data_filename, output):
@@ -220,3 +235,8 @@ class App:
                 if isinstance(sub, BusinessFinderEventSubscriber):
                         sub.ExecQuery_OnComplete(query_data_filename, output)
             
+    def fire_execquery_before(self, http_req_url, term):
+        if not self.event_subs is None:
+            for sub in self.event_subs:
+                if isinstance(sub, BusinessFinderEventSubscriber):
+                        sub.ExecQuery_Before(http_req_url, term)

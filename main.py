@@ -11,6 +11,12 @@ import jmespath
 import os
 
 #================================================================================
+# CONSTANTS
+#================================================================================
+TERMS = 'finance'
+CATEGORIES = ['tax', 'accountant']
+
+#================================================================================
 # LAMBDAS/FUNCTIONS
 #================================================================================
 def entry_point():
@@ -28,14 +34,15 @@ def entry_point():
     #result = app.ExecAllQueries()
     #print(result)
 
-    result = app.ExecQueries(2)
-    print('QUERY RESULT')
-    print('')
-    print(result)
+    #result = app.ExecQueries(stop=2, term=TERMS)
+    cats = CATEGORIES
+    if cats != None:
+        print(f"Categories: {cats}")
+    result = app.ExecQueries(stop=2, term=TERMS, categories=CATEGORIES)
 
     # apply filter to query data filenames
     q_filter = JmesPathFilter()
-    filtered_query_results = q_filter.Apply(printer.queryDataItems, 'businesses[].{Name: name, Phone: display_phone, Address: location}')
+    filtered_query_results = q_filter.Apply(printer.queryDataItems, 'businesses[].{Name: name, Categories: categories, Phone: display_phone, Address: location}')
 
     def cmp_items_name(a, b):
         name_a = a['Name']
@@ -78,8 +85,8 @@ def entry_point():
     #
 
     # delete last output file
-    if os.path.exists('businesses.txt'):
-        os.remove('businesses.txt')
+    if os.path.exists('output/businesses.txt'):
+        os.remove('output/businesses.txt')
 
     text_output = list(map(convert_query_item_to_text, final_results))
 
@@ -89,6 +96,12 @@ def entry_point():
         with open("output/businesses.txt", "a") as f:
             f.write(text_output_item)
             #f.write(f"output/{text_output_item}")
+
+    print('')
+    print('QUERY RESULT:')
+    print('')
+    for t in text_output:
+        print(t)
 
 #================================================================================
 # ENTRY-POINT
