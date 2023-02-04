@@ -1,5 +1,7 @@
 */__pycache__/*
 */venv/*
+*/keys/*
+*/output/*
 Pipefile
 Pipefile.lock
 run.sh
