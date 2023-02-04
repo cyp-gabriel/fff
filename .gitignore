@@ -2,3 +2,4 @@
 */venv/*
 Pipefile
 Pipefile.lock
+run.sh
