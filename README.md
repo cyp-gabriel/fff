@@ -2,8 +2,12 @@
 
 ## v1.0
 
-Changes:
+### Changes
 
 * App.py: parameterized for 'term' and 'categories'
 * events.py: Cleaned up printed output
 * events.py: Added "before" event
+
+### Next
+
+* Run App on all zip codes
